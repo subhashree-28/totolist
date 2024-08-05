@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import "./todolist.css";
 
 export default function Todolist() {
@@ -15,7 +15,36 @@ interface Todo {
   completed: boolean;
 }
 
-function Options() {
+interface AppContextProps {
+  input: string;
+  setInput: (input: string) => void;
+  inputArray: Todo[];
+  setInputArray: (inputArray: Todo[]) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  filteredItem: Todo[];
+  setFilteredItem: (filteredItem: Todo[]) => void;
+  handleInput: (e: any) => void;
+  handleKeyDown: (e: any) => void;
+  handleCheckBox: (index: number) => void;
+  all: () => void;
+  completed: () => void;
+  active: () => void;
+  clear: () => void;
+  active_count: number;
+}
+
+const AppContext = createContext<AppContextProps | null>(null);
+
+export const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (context === null) {
+    throw new Error("useAppContext must be used within an AppProvider");
+  }
+  return context;
+};
+
+const App = () => {
   const [input, setInput] = useState("");
   const [inputArray, setInputArray] = useState<Todo[]>([]);
   const [open, setOpen] = useState(false);
@@ -43,6 +72,10 @@ function Options() {
     );
   };
 
+  const all = () => {
+    setFilteredItem(inputArray);
+  };
+
   const completed = () => {
     setFilteredItem(inputArray.filter((i) => i.completed === true));
   };
@@ -50,16 +83,60 @@ function Options() {
   const active = () => {
     setFilteredItem(inputArray.filter((i) => !i.completed));
   };
-  const all = () => {
-    setFilteredItem(inputArray);
-  };
 
   const clear = () => {
     const deleteItems = inputArray.filter((item) => !item.completed);
     setInputArray(deleteItems);
   };
 
-  const activeCount = inputArray.filter((item) => !item.completed).length;
+  const active_count = inputArray.filter((item) => !item.completed).length;
+
+  return (
+    <AppContext.Provider
+      value={{
+        input,
+        setInput,
+        inputArray,
+        setInputArray,
+        open,
+        setOpen,
+        filteredItem,
+        setFilteredItem,
+        handleInput,
+        handleKeyDown,
+        handleCheckBox,
+        all,
+        completed,
+        active,
+        clear,
+        active_count,
+      }}
+    >
+      <Todolist />
+    </AppContext.Provider>
+  );
+};
+
+function Options() {
+
+  const {
+    input,
+    setInput,
+    inputArray,
+    setInputArray,
+    open,
+    setOpen,
+    filteredItem,
+    setFilteredItem,
+    handleInput,
+    handleKeyDown,
+    handleCheckBox,
+    all,
+    completed,
+    active,
+    clear,
+    active_count
+  } = useAppContext();
 
   return (
     <div>
@@ -76,7 +153,7 @@ function Options() {
       </div>
       {open && (
         <div className="add">
-          {filteredItem.map((input, index) => (
+          {filteredItem.map((input: any, index: any) => (
             <div className="input-item" key={index}>
               <input
                 type="checkbox"
@@ -88,7 +165,7 @@ function Options() {
             </div>
           ))}
           <div className="buttons">
-            <button className="input_length">{activeCount} items left!</button>
+            <button className="input_length">{active_count} items left!</button>
             <button className="all_button" onClick={all}>
               All
             </button>
